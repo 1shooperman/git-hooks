@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+""" 
+prepare-commit-msg: 
+    a git pre-commit hook for building standardized commit messasages
+
+Requires:
+    python 3.5+ 
+
+Usage:
+    mkdir ~/.git_templates
+    git config --global init.templatedir '~/.git-templates'
+    cd your-git-repo
+    git init
+    git commit
+"""
+import subprocess
+import sys
+import re
+
+default_branch="master"
+
+def main():
+    """ main """
+    (branch, err) = get_branch()
+
+    _, file, *_ = sys.argv
+    
+    if err:
+        print(err)
+    else:
+        write_message(file=file, branch=branch)
+
+
+def get_branch():
+    """
+    getBranch:
+        runs a git specific command to grab the current branch name
+        returns a tuple (stdout, stderr) 
+    """
+    proc = subprocess.Popen(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"], 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE
+    )
+
+    (stdout, stderr) = proc.communicate()
+
+    out = stdout.decode('utf-8').strip()
+    err = stderr.decode('utf-8').strip()
+
+    if "unknown revision or path not in the working tree" in err:
+        out = default_branch
+        err = None
+
+
+    return (out, err)
+
+def get_message_template():
+    """ Return the message template """
+    return """# Subject line (try to keep under 50 characters)
+[{}]
+
+# Multi-line description of commit,
+# feel free to be detailed.
+
+# [See Also: X]
+    """
+
+def write_message(file=None, branch=default_branch):
+    """ writes the message to the commit message (argv[1]) """
+    matches = None
+    if file is not None:
+        with open(file, 'r') as original: 
+            data = original.read()
+
+        # make sure there isn't already a commit message
+        first_char = data[:1]
+        matches = re.match("[\t\n\r\f\v#]", first_char)
+
+    if matches is not None:
+        with open(file, 'w+') as modified: 
+            modified.write(get_message_template().format(branch) + "\n" + data)
+
+
+if __name__ == "__main__":
+    main()
