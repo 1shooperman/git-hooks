@@ -10,14 +10,6 @@ Contains custom git configurations for my local environment.
 cd your-git-repo
 git init
 ```
-
-mkdir -p ~/.git_templates/hooks
-git config --global init.templatedir '~/.git_templates'
-cp prepare-commit-msg.py ~/.git_templates/hooks/prepare-commit-msg
-cd your-git-repo
-git init
-git commit
-
 ## /hooks
 
 ### post-merge
